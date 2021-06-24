@@ -12,7 +12,8 @@ export default compose(
         state => ({
             currentRender:state.app.currentRender,
             numberOfPages:state.app.numberOfPagesState,
-            searchString:state.app.search
+            searchString:state.app.search,
+            gatheringPokemons:state.app.gatheringPokemons,
           }),
         dispatch => ({
                 getPokemonsOnStart: () => getPokemonsOnStart(dispatch),

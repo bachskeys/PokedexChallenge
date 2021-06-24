@@ -1,5 +1,5 @@
 import axios from "axios";
-import {setPokemon,gatheringPokemon, setCurrentRender, setNumberOfPages, setSelectedPokemon} from "../AppState";
+import {setPokemon,setGatheringPokemons, setCurrentRender, setNumberOfPages, setSelectedPokemon} from "../AppState";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 const api = "https://pokeapi.co/api/v2/"
 let pokemonCount = 1
@@ -8,11 +8,13 @@ const pokemonKeystore = "@Pokemons"
 
 
 export async function getPokemonsOnStart(dispatch){
+    dispatch(setGatheringPokemons(true))
     const{exists, asyncPokemons } = await getAsyncPokemons()
     if(exists && asyncPokemons.length-1 < pokemonsToGather){
         asyncPokemons.forEach(pokemon => {
                 dispatch(setPokemon(pokemon))
         });
+        dispatch(setGatheringPokemons(false))
         return dispatch(paginate( 1 ))
     }
     while( pokemonCount < pokemonsToGather ){
@@ -28,6 +30,7 @@ export async function getPokemonsOnStart(dispatch){
     }
     dispatch(saveAsyncPokemons())
     dispatch(paginate( 1 ))
+    dispatch(setGatheringPokemons(false))
 }
 
 export async function getSinglePokemon( id,dispatch ){

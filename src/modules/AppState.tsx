@@ -138,6 +138,11 @@ type AppStateType = {
           ...state,
           pokemonSelected:action.payload
         }
+      case SET_GATHERING_POKEMONS:
+        return{
+          ...state,
+          gatheringPokemons:action.payload
+        }
       default:
         return state;
     }

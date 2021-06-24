@@ -6,10 +6,13 @@ import {
   FlatList,
   Image,
   ActivityIndicator,
-  Platform
+  Platform,
+  Animated
 } from 'react-native';
 import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
 import {SearchBar } from 'react-native-elements';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 
 
@@ -18,12 +21,11 @@ import {SearchBar } from 'react-native-elements';
 const renderPokemon = ({item},{navigation}) => {
   return (
   <TouchableOpacity 
-  style={{flex:1,alignItems:"center",width:Platform.OS==="ios"?120:130}} 
+  style={styles.gridItemPressContainer} 
   onPress={()=>{
-    navigation.setOptions({headerTitle:null})
     navigation.navigate("Pokedex",{pokemonID:item.key})
     }}>
-  <View key={item.key} style={{flex:1,alignItems:"center"}}>
+  <View key={item.key} style={styles.gridConainer}>
     <Image source={{uri:item.img}}
      style={{width:100,height:100}}
     />
@@ -46,7 +48,11 @@ const renderPage = ({item},{paginate}) =>{
 
 
 export default class HomeScree extends Component {
-  componentDidMount(){
+  state = {
+    animation: new Animated.Value(1.5),
+  }
+  async componentDidMount(){
+//    await AsyncStorage.clear()
    this.props.resetState();
    this.props.getPokemonsOnStart();
   }
@@ -64,13 +70,44 @@ export default class HomeScree extends Component {
     this.props.filterPokemons()
 
   }
+  animatedPokeball = () =>{
+    Animated.loop(
+      Animated.sequence(
+        [
+           Animated.timing(
+          this.state.animation,{
+              toValue: 2,
+              duration:2000
+           }
+        ),
+          Animated.timing(
+              this.state.animation,{
+                  toValue: 1.5,
+                  duration:2000
+              }
+          ), 
+        ],
+        {iterations:1})
+  ).start()
+  }
  
 
   render() { 
     const pageData = this.mapPagesToData();
+    const{ gatheringPokemons, currentRender:{ pokemonsPaged} } = this.props;
+    const AnimatedStyles = {
+      transform:[
+          {
+              scale: this.state.animation
+          },
+      ],
+    }
+    this.animatedPokeball()
+
     return ( 
   <View style={{flex:1, marginBottom:10}}>
     <SearchBar
+      disabled={gatheringPokemons}
       placeholder={"look for a pokemon with id or name...."}
       style={{padding:10}}
       onChangeText={(e)=>{this.search(e)}}
@@ -79,15 +116,7 @@ export default class HomeScree extends Component {
     />
      <FlatList
         data={pageData}
-        contentContainerStyle={{
-        flex:1,
-        flexDirection:"row",
-        justifyContent:"space-between",
-        alignItems:"center",
-        padding:10,
-        margin:5,
-        height:50
-      }}
+        contentContainerStyle={styles.paginationContainer}
         renderItem={(item)=>renderPage(item,this.props)}
         showsHorizontalScrollIndicator={false}
         horizontal={true}
@@ -97,18 +126,31 @@ export default class HomeScree extends Component {
       horizontal
       showsVerticalScrollIndicator={false}
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{flex:1,alignItems:"center",alignItems:'flex-start' ,height:800}}
+      contentContainerStyle={[styles.scrollContainer,{height:pokemonsPaged.length<10?500:null}]}
       scrollEnabled={false}
 
   >
-      <FlatList
-        data={this.props.currentRender.pokemonsPaged}
+    {gatheringPokemons? 
+    <View style={styles.loadingContainer}>
+    <Text style={styles.loadingTextContainer}>Gathering pokemons for the first time</Text>
+    <Text style={styles.loadingTextContainer}>this may take a few minutes</Text>
+    <View style={styles.pokeBallContainer}>
+       <Animated.Image source={require('../../../assets/pokeball.png')} 
+         style={[styles.pokeBallImageStart,AnimatedStyles]}>
+         </Animated.Image>
+    </View>
+    </View>
+    
+    :
+    <FlatList
+        data={pokemonsPaged}
         numColumns={3}
         renderItem={(item)=>renderPokemon(item,this.props)}
         showsHorizontalScrollIndicator={false}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{flexDirection:"column",}}
-      />
+        contentContainerStyle={styles.gridConainer}
+      />}
+   
     </ScrollView>
     </View>
      );
@@ -118,49 +160,29 @@ export default class HomeScree extends Component {
 
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'space-around',
-  },
-  bgImage: {
-    flex: 1,
-    marginHorizontal: -20,
-  },
-  section: {
-    flex: 1,
-    paddingHorizontal: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sectionLarge: {
-    flex: 2,
-    justifyContent: 'space-around',
-  },
-  sectionHeader: {
-    marginBottom: 8,
-  },
-  priceContainer: {
-    alignItems: 'center',
-  },
-  description: {
-    padding: 15,
-    lineHeight: 25,
-  },
-  titleDescription: {
-    color: '#19e7f7',
-    textAlign: 'center',
-    //fontFamily: fonts.primaryRegular,
-    fontSize: 15,
-  },
-  title: {
-    marginTop: 30,
-  },
-  price: {
-    marginBottom: 5,
-  },
-  priceLink: {
-    borderBottomWidth: 1,
-   // borderBottomColor: colors.primary,
-  },
+loadingTextContainer:{fontSize:20,textAlign:"center"},
+pokeBallImageStart:{
+  width:100,
+  height:100
+},
+pokeBallContainer:{
+  flex:2,
+   justifyContent:"center",
+  alignItems:"center", 
+  flexDirection:"column"
+},
+loadingContainer:{flex:1,justifyContent:"center", alignItems:"center"},
+scrollContainer:{flex:1,alignItems:"center",alignItems:'flex-start' ,},
+gridConainer:{flexDirection:"column",},
+paginationContainer:{
+  flex:1,
+  flexDirection:"row",
+  justifyContent:"space-between",
+  alignItems:"center",
+  padding:10,
+  margin:5,
+  height:50
+},
+gridItemPressContainer:{flex:1,alignItems:"center",width:Platform.OS==="ios"?120:130},
+gridItemContainer:{flex:1,alignItems:"center"}
 }); 
