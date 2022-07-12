@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component,useState, userEffect, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -11,17 +11,35 @@ import {
 
 
 
+const StatItem = ({stat,index}) =>{
+  const[localStat] = useState(new Animated.Value(0))
+   useEffect(()=>{
+     let barTransition = 250
+      Animated.timing(localStat,{
+        toValue:stat.baseStat>100?100:stat.baseStat,
+        duration:barTransition
+        }).start()
+
+   },[localStat])
+   console.log("looking at stat",new Animated.Value(0))
+  return(
+  <View
+    key={index}
+     style={styles.statBarContainer}>
+        <Text>{stat.name}</Text>
+        <Animated.View style={[styles.absoluteFill,{backgroundColor:"#8BED4F",width:localStat.interpolate({
+          inputRange:[0,100],
+          outputRange:["0%","100%"]
+        }),opacity:.4}]}/>
+    </View>)
+}
+
+
 
 
 export default class PokedexScreen extends Component {
     state = {
         animation: new Animated.Value(1.5),
-        hp: new Animated.Value(0),
-        attack: new Animated.Value(0),
-        defense: new Animated.Value(0),
-        specialAttack: new Animated.Value(0),
-        specialDefense: new Animated.Value(0),
-        speed: new Animated.Value(0),
 
     }
     componentDidMount(){
@@ -43,11 +61,7 @@ export default class PokedexScreen extends Component {
           })
     }
 
-      animationsTrigger = ( stats ) =>{
-        let barTransition = 250
-       
-    
-
+      pokeBallAnimation = () =>{
         Animated.loop(
           Animated.sequence(
             [
@@ -66,54 +80,7 @@ export default class PokedexScreen extends Component {
             ],
             {iterations:1})
       ).start()
-           stats.forEach( stat =>{
-             if(stat && stat.name){
-              switch(stat.name){
-                case"hp":
-                Animated.timing(this.state.hp,{
-                  toValue:stat.baseStat>100?100:stat.baseStat,
-                  duration:barTransition
-                  }).start()
-                  break;
-                case"attack":
-                Animated.timing(this.state.attack,{
-                  toValue:stat.baseStat>100?100:stat.baseStat,
-                  duration:barTransition
-                }).start()
-                break;
-                case"defense":
-                Animated.timing(this.state.defense,{
-                  toValue:stat.baseStat>100?100:stat.baseStat,
-                  duration:barTransition
-                }).start()
-                break;
-                case"special-attack":
-                Animated.timing(this.state.specialAttack,{
-                  toValue:stat.baseStat>100?100:stat.baseStat,
-                  duration:barTransition
-                }).start()
-                break;
-                case"special-defense":
-                Animated.timing(this.state.specialDefense,{
-                  toValue:stat.baseStat>100?100:stat.baseStat,
-                  duration:barTransition
-                }).start()
-                break;
-                case"speed":
-                Animated.timing(this.state.speed,{
-                  toValue:stat.baseStat>100?100:stat.baseStat,
-                  duration:barTransition
-                }).start()
-                break;
-              }
-             }
-           })
-
-
-
-
-  
-      }
+  }
   render() { 
     const{pokemonSelected} = this.props;
       const AnimatedStyles = {
@@ -123,93 +90,12 @@ export default class PokedexScreen extends Component {
             },
         ],
       }
+      this.pokeBallAnimation()
       let description = this.formatText(pokemonSelected.description)
       let stats = this.formatStats()
-      this.animationsTrigger(stats);
        let statsRender = stats.map((stat,index)=>{
-        if(stat && stat.baseStat && stat.name)
-        switch(stat.name){
-          case "attack":
-          return(
-            <View 
-            key={index}
-             style={styles.statBarContainer}>
-                <Text>{stat.name}</Text>
-                <Animated.View style={[styles.absoluteFill,{backgroundColor:"#8BED4F",width:this.state.attack.interpolate({
-                  inputRange:[0,100],
-                  outputRange:["0%","100%"]
-                }),opacity:.4}]}/>
-            </View>
-           )
-           case "defense":
-            return(
-              <View 
-              key={index}
-              style={styles.statBarContainer}>
-                  <Text>{stat.name}</Text>
-                  <Animated.View style={[styles.absoluteFill,{backgroundColor:"#8BED4F",width:this.state.defense.interpolate({
-                  inputRange:[0,100],
-                  outputRange:["0%","100%"]
-                }),opacity:.4}]}/>
-              </View>
-             ) 
-             case "hp":
-          return(
-            <View 
-            key={index}
-            style={styles.statBarContainer}  >
-                <Text>{stat.name}</Text>
-                <Animated.View style={[styles.absoluteFill,{backgroundColor:"#8BED4F",width:this.state.hp.interpolate({
-                  inputRange:[0,100],
-                  outputRange:["0%","100%"]
-                }),opacity:.4}]}/>
-            </View>
-           ) 
-           case "special-attack":
-          return(
-            <View 
-            key={index}
-            style={styles.statBarContainer}
-           >
-                <Text>{stat.name}</Text>
-                <Animated.View style={[styles.absoluteFill,{backgroundColor:"#8BED4F",width:this.state.specialAttack.interpolate({
-                  inputRange:[0,100],
-                  outputRange:["0%","100%"]
-                }),opacity:.4}]}/>
-            </View>
-           )  
-           case "special-defense":
-          return(
-            <View 
-            key={index}
-            style={styles.statBarContainer}
-          >
-                <Text>{stat.name}</Text>
-                <Animated.View style={[styles.absoluteFill,{backgroundColor:"#8BED4F",width:this.state.specialDefense.interpolate({
-                  inputRange:[0,100],
-                  outputRange:["0%","100%"]
-                }),opacity:.4}]}/>
-            </View>
-           )
-           case "speed":
-          return(
-            <View 
-            key={index}
-            style={styles.statBarContainer}
-
-          >
-                <Text>{stat.name}</Text>
-                <Animated.View style={[styles.absoluteFill,{backgroundColor:"#8BED4F",width:this.state.speed.interpolate({
-                  inputRange:[0,100],
-                  outputRange:["0%","100%"]
-                }),opacity:.4}]}/>
-            </View>
-           )    
-            }
+            return  (stat && stat.baseStat && stat.name )? <StatItem index={index} stat={stat}/>:null
        })
-
-
-
 
     return ( 
     <View style={styles.mainContainer}>
